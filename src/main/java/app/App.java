@@ -2,10 +2,6 @@ package app;
 
 import dao.Reader;
 import dao.Writer;
-import lombok.extern.log4j.Log4j;
-import lombok.extern.log4j.Log4j2;
-import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 
 import java.io.IOException;
 import java.text.Normalizer;
@@ -14,7 +10,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class App {
     private final static String SPACE = " ";
@@ -160,7 +155,7 @@ public class App {
     }
 
     private static void putWardMap(String wardSqlLine, Map<Long, Ward> wardMap, Map<Long, District> districtsMap) {
-        final Ward ward = getWard(wardSqlLine, districtsMap);
+        final Ward ward = getWard(wardSqlLine, districtsMap, wardMap);
 
         if (ward != null && ward.getId()
                                 .equals("26074")) {
@@ -180,7 +175,7 @@ public class App {
 
     //(id, district_id, is_active, type1, ward_id, ward_name, type) VALUES
     //      ('1863', '132', 1, '', '04552', 'Phúc Lộc', null);
-    private static Ward getWard(String wardSqlLine, Map<Long, District> districtsMap) {
+    private static Ward getWard(String wardSqlLine, Map<Long, District> districtsMap, Map<Long, Ward> wardMap) {
         final List<String> items = getItems(wardSqlLine);
         final District district = districtsMap.get(Long.valueOf(items.get(1)));
         final String wardName = items.get(4);
@@ -191,15 +186,10 @@ public class App {
                               .build();
         if (district != null) {
             ward.setDistrictCode(district.getCode());
-            final String wardCode = generateWardCode(district.getCode(), wardName);
+            final String wardCode = generateCode(district.getCode(), wardName, wardMap);
             ward.setCode(wardCode);
         }
         return ward;
-    }
-
-    private static String generateWardCode(String districtCode, String wardName) {
-        final String wardCode = districtCode + getFirstUpWord(wardName);
-        return wardCode;
     }
 
     private static Map<Long, District> getMapDistrict(String districtSql, Map<Long, Province> provinceMap) throws IOException {
@@ -230,7 +220,7 @@ public class App {
                                     .build();
         if (province != null) {
             district.setProvinceCode(province.getCode());
-            final String districtCode = generateDistrictCode(province.getCode(), districtName, districtsMap);
+            final String districtCode = generateCode(province.getCode(), districtName, districtsMap);
             district.setCode(districtCode);
         }
 
@@ -249,13 +239,13 @@ public class App {
 
 
     //HNTH001 ma dictrict = ma province + cac chu cai dau cua ten huyen/quan + so thu tu vd: 001 (tang dan neu ma ton tai ma truoc do)
-    private static String generateDistrictCode(String provinceCode, String districtName, Map<Long, District> districtsMap) {
-        final String districtCodeOnly = provinceCode + deAccent(getFirstUpWord(districtName)).toUpperCase();
-        final String districtCode = generateDistrictCodeIndex(districtCodeOnly, districtsMap, 0);
-        return districtCode;
+    private static String generateCode(String code, String name, Map<Long, ? extends Model> map) {
+        final String codeOnlyWord = code + deAccent(getFirstUpWord(name)).toUpperCase();
+        final String identityCode = generateCodeByIndex(codeOnlyWord, map, 0);
+        return identityCode;
     }
 
-    private static String generateDistrictCodeIndex(String districtCodeOnly, Map<Long, District> districtsMap, int index) {
+    private static String generateCodeByIndex(String districtCodeOnly, Map<Long, ? extends Model> districtsMap, int index) {
         final String indexString = getIndexString(index);
         String districtCode = districtCodeOnly + indexString;
         final boolean anyMatch = districtsMap.values()
@@ -264,7 +254,7 @@ public class App {
                                              .anyMatch(e -> e.equals(districtCode));
         if (anyMatch) {
             index++;
-            return generateDistrictCodeIndex(districtCodeOnly, districtsMap, index);
+            return generateCodeByIndex(districtCodeOnly, districtsMap, index);
         }
         return districtCode;
     }
