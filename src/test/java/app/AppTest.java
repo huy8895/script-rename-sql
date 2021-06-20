@@ -20,13 +20,13 @@ public class AppTest extends TestCase {
     @Test
     public void test2(){
 
-        System.out.println(deAccent("Xin chào Việt Nam"));
+        System.out.println(deAccent("THANT000PĐ"));
     }
 
     public static String deAccent(String str) {
-        String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
+        String temp = Normalizer.normalize(str, Normalizer.Form.NFD);
         Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        return pattern.matcher(nfdNormalizedString).replaceAll("");
+        return pattern.matcher(temp).replaceAll("").toLowerCase().replaceAll(" ", "-").replaceAll("đ", "d");
     }
 
 

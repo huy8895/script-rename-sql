@@ -2,8 +2,13 @@ package app;
 
 import dao.Reader;
 import dao.Writer;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.XSlf4j;
 
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -58,8 +63,11 @@ public class App {
         final List<String> newWardSql = getNewWardSql(wardMap, districtMap);
 
 
+        System.out.println("========== check dup and Telex province ==========");
         listCodeDuplicateAndVnTelex(provinceMap);
+        System.out.println("========== check dup and Telex district ==========");
         listCodeDuplicateAndVnTelex(districtMap);
+        System.out.println("========== check dup and Telex ward ==========");
         listCodeDuplicateAndVnTelex(wardMap);
 
         Writer.write(newProvinceSql, NEW_FILE_PROVINCE_SQL);
@@ -69,25 +77,23 @@ public class App {
 
     }
 
-    private static void listCodeDuplicateAndVnTelex(Map<Long, ? extends Model> newProvinceSql) {
-        System.out.println("-------- start check duplicate ----------");
-        final long countDuplicate = newProvinceSql.values()
-                                                  .stream()
-                                                  .map(Model::getCode)
-                                                  .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                                                  .entrySet()
-                                                  .stream()
-                                                  .filter(m -> m.getValue() > 1)
-                                                  .peek(System.out::println)
-                                                  .count();
+    private static void listCodeDuplicateAndVnTelex(Map<Long, ? extends Model> map) {
+        final long countDuplicate = map.values()
+                                       .stream()
+                                       .map(Model::getCode)
+                                       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                       .entrySet()
+                                       .stream()
+                                       .filter(m -> m.getValue() > 1)
+                                       .peek(System.out::println)
+                                       .count();
         System.out.printf("========== count duplicate: %s ========== \n", countDuplicate);
-        System.out.println("-------- start check TELEX ----------");
-        final long countTelex = newProvinceSql.values()
-                                              .stream()
-                                              .map(Model::getCode)
-                                              .filter(s -> !s.matches("[\\w=]+"))
-                                              .peek(System.out::println)
-                                              .count();
+        final long countTelex = map.values()
+                                   .stream()
+                                   .map(Model::getCode)
+                                   .filter(s -> !s.matches("[\\w=]+"))
+                                   .peek(System.out::println)
+                                   .count();
         System.out.printf("========== count Telex: %s ==========\n", countTelex);
     }
 
@@ -231,25 +237,35 @@ public class App {
         return district;
     }
 
-    private static void addToDistrictMap(Map<Long, District> districtMap, String districtCode, int index) {
+    private static String getIndexString(int index) {
         String indexString = "";
         if (index < 10) {
             indexString = "00" + index;
         } else if (index < 100) {
             indexString = "0" + index;
         }
-        String newDistrictCode = districtCode + indexString;
-        if (districtMap.containsKey(newDistrictCode)) {
-            index++;
-            addToDistrictMap(districtMap, districtCode, index);
-        } else {
-        }
+        return indexString;
     }
 
 
     //HNTH001 ma dictrict = ma province + cac chu cai dau cua ten huyen/quan + so thu tu vd: 001 (tang dan neu ma ton tai ma truoc do)
     private static String generateDistrictCode(String provinceCode, String districtName, Map<Long, District> districtsMap) {
-        final String districtCode = provinceCode + getFirstUpWord(districtName);
+        final String districtCodeOnly = provinceCode + deAccent(getFirstUpWord(districtName)).toUpperCase();
+        final String districtCode = generateDistrictCodeIndex(districtCodeOnly, districtsMap, 0);
+        return districtCode;
+    }
+
+    private static String generateDistrictCodeIndex(String districtCodeOnly, Map<Long, District> districtsMap, int index) {
+        final String indexString = getIndexString(index);
+        String districtCode = districtCodeOnly + indexString;
+        final boolean anyMatch = districtsMap.values()
+                                             .stream()
+                                             .map(Model::getCode)
+                                             .anyMatch(e -> e.equals(districtCode));
+        if (anyMatch) {
+            index++;
+            return generateDistrictCodeIndex(districtCodeOnly, districtsMap, index);
+        }
         return districtCode;
     }
 
@@ -360,5 +376,11 @@ public class App {
                                           .build();
         map.put(name, province);
 
+    }
+
+    public static String deAccent(String str) {
+        String temp = Normalizer.normalize(str, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        return pattern.matcher(temp).replaceAll("").toLowerCase().replaceAll(" ", "-").replaceAll("đ", "d");
     }
 }
