@@ -16,15 +16,11 @@ public class App {
     private final static String SINGLE_QUOTE = "'";
     private final static String DISTRICT_SQL = "src/main/java/location_data/district.sql";
     private final static String PROVINCE_SQL = "src/main/java/location_data/province.sql";
-    private final static String VIEW_PROVINCE_DISTRICT_WARD_SQL = "src/main/java/location_data/view_province_district_ward.sql";
-    private final static String VIEW_PROVINCE_DISTRICT_WARD_CHANGED_AT_SQL = "src/main/java/location_data/view_province_district_ward_changed_at.sql";
     private final static String WARD_SQL = "src/main/java/location_data/ward.sql";
     private final static String FILE_DANH_SACH_TINH = "src/main/java/location_data/sanhsachtinh.txt";
     private final static String NEW_DSTINH = "src/main/java/output/newDStinh.txt";
     private final static String NEW_FILE_DISTRICT_SQL = "src/main/java/output/newDistrict.sql";
     private final static String NEW_FILE_PROVINCE_SQL = "src/main/java/output/newProvince.sql";
-    private final static String NEW_FILE_VIEW_PROVINCE_DISTRICT_WARD_SQL = "src/main/java/output/newView_province_district_ward_changed_at.sql";
-    private final static String NEW_FILE_VIEW_PROVINCE_DISTRICT_WARD_CHANGED_AT_SQL = "src/main/java/output/newView_province_district_ward.sql";
     private final static String NEW_FILE_WARD_SQL = "src/main/java/output/newWard.sql";
 
     static final String REGEX_PROVINCE_ID_SQL = "(\\s'[0-9]{2}')";
@@ -199,7 +195,6 @@ public class App {
         return districtsMap;
     }
 
-    //TODO: put District to map from single district sql;
     private static void putDistrictMap(String districtSqlLine, Map<Long, District> districtsMap, Map<Long, Province> provinceMap) {
         final District d = getDistrict(districtSqlLine, provinceMap, districtsMap);
         if (d != null) {
@@ -207,7 +202,6 @@ public class App {
         }
     }
 
-    //TODO: get District from district sql line;
     //(id, district_id, district_name, is_active, province_id, type) VALUES ('763', '994', 'Thị xã Hoài Nhơn', 1, '52', null);
     private static District getDistrict(String districtSqlLine, Map<Long, Province> provinceMap, Map<Long, District> districtsMap) {
         List<String> items = getItems(districtSqlLine);
