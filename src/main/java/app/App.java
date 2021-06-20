@@ -9,6 +9,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class App {
     private final static String SPACE = " ";
@@ -52,13 +53,13 @@ public class App {
         Map<Long, Ward> wardMap = getMapWard(WARD_SQL, districtMap);
 
         //write province to file:
-        final List<String> newProvinceSql = getNewProvinceSql(provinceMap);
-        final List<String> newDistrictSql = getNewDistrictSql(districtMap, provinceMap);
-        final List<String> newWardSql = getNewWardSql(wardMap, districtMap);
+//        final List<String> newProvinceSql = getNewProvinceSql(provinceMap);
+//        final List<String> newDistrictSql = getNewDistrictSql(districtMap, provinceMap);
+//        final List<String> newWardSql = getNewWardSql(wardMap, districtMap);
 
 
 //        listCodeDuplicateAndVnTelex(provinceMap);
-//        listCodeDuplicateAndVnTelex(districtMap);
+        listCodeDuplicateAndVnTelex(districtMap);
         listCodeDuplicateAndVnTelex(wardMap);
 
 //        Writer.write(newProvinceSql, NEW_FILE_PROVINCE_SQL);
@@ -69,17 +70,25 @@ public class App {
     }
 
     private static void listCodeDuplicateAndVnTelex(Map<Long, ? extends Model> newProvinceSql) {
-        newProvinceSql.entrySet()
-                      .stream()
-                      .map(line -> line.getValue()
-                                       .getCode())
-                      .collect(Collectors.groupingBy(Function.identity(),
-                              Collectors.counting()))
-
-                      .entrySet()
-                      .stream()
-                      .filter(m -> m.getValue() > 1)
-        .forEach(System.out::println);
+        System.out.println("-------- start check duplicate ----------");
+        final long countDuplicate = newProvinceSql.values()
+                                         .stream()
+                                         .map(Model::getCode)
+                                         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                         .entrySet()
+                                         .stream()
+                                         .filter(m -> m.getValue() > 1)
+                                         .peek(System.out::println)
+                                         .count();
+        System.out.printf("========== count duplicate: %s ========== \n" , countDuplicate);
+        System.out.println("-------- start check TELEX ----------");
+        final long countTelex = newProvinceSql.values()
+                                         .stream()
+                                         .map(Model::getCode)
+                                         .filter(s -> !s.matches("[\\w=]+"))
+                                         .peek(System.out::println)
+                                         .count();
+        System.out.printf("========== count Telex: %s ==========\n" , countTelex);
     }
 
     private static List<String> getNewWardSql(Map<Long, Ward> wardMap, Map<Long, District> districtMap) throws IOException {
