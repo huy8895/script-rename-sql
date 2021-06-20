@@ -53,42 +53,42 @@ public class App {
         Map<Long, Ward> wardMap = getMapWard(WARD_SQL, districtMap);
 
         //write province to file:
-//        final List<String> newProvinceSql = getNewProvinceSql(provinceMap);
-//        final List<String> newDistrictSql = getNewDistrictSql(districtMap, provinceMap);
-//        final List<String> newWardSql = getNewWardSql(wardMap, districtMap);
+        final List<String> newProvinceSql = getNewProvinceSql(provinceMap);
+        final List<String> newDistrictSql = getNewDistrictSql(districtMap, provinceMap);
+        final List<String> newWardSql = getNewWardSql(wardMap, districtMap);
 
 
-//        listCodeDuplicateAndVnTelex(provinceMap);
+        listCodeDuplicateAndVnTelex(provinceMap);
         listCodeDuplicateAndVnTelex(districtMap);
         listCodeDuplicateAndVnTelex(wardMap);
 
-//        Writer.write(newProvinceSql, NEW_FILE_PROVINCE_SQL);
-//        Writer.write(newDistrictSql, NEW_FILE_DISTRICT_SQL);
-//        Writer.write(newWardSql, NEW_FILE_WARD_SQL);
-//        Writer.write(DUPLICATE_WARDS, FILE_DUPLICATE_WARD_SQL);
+        Writer.write(newProvinceSql, NEW_FILE_PROVINCE_SQL);
+        Writer.write(newDistrictSql, NEW_FILE_DISTRICT_SQL);
+        Writer.write(newWardSql, NEW_FILE_WARD_SQL);
+        Writer.write(DUPLICATE_WARDS, FILE_DUPLICATE_WARD_SQL);
 
     }
 
     private static void listCodeDuplicateAndVnTelex(Map<Long, ? extends Model> newProvinceSql) {
         System.out.println("-------- start check duplicate ----------");
         final long countDuplicate = newProvinceSql.values()
-                                         .stream()
-                                         .map(Model::getCode)
-                                         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                                         .entrySet()
-                                         .stream()
-                                         .filter(m -> m.getValue() > 1)
-                                         .peek(System.out::println)
-                                         .count();
-        System.out.printf("========== count duplicate: %s ========== \n" , countDuplicate);
+                                                  .stream()
+                                                  .map(Model::getCode)
+                                                  .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                                                  .entrySet()
+                                                  .stream()
+                                                  .filter(m -> m.getValue() > 1)
+                                                  .peek(System.out::println)
+                                                  .count();
+        System.out.printf("========== count duplicate: %s ========== \n", countDuplicate);
         System.out.println("-------- start check TELEX ----------");
         final long countTelex = newProvinceSql.values()
-                                         .stream()
-                                         .map(Model::getCode)
-                                         .filter(s -> !s.matches("[\\w=]+"))
-                                         .peek(System.out::println)
-                                         .count();
-        System.out.printf("========== count Telex: %s ==========\n" , countTelex);
+                                              .stream()
+                                              .map(Model::getCode)
+                                              .filter(s -> !s.matches("[\\w=]+"))
+                                              .peek(System.out::println)
+                                              .count();
+        System.out.printf("========== count Telex: %s ==========\n", countTelex);
     }
 
     private static List<String> getNewWardSql(Map<Long, Ward> wardMap, Map<Long, District> districtMap) throws IOException {
@@ -256,14 +256,21 @@ public class App {
     private static String getFirstUpWord(String name) {
         final String[] split = name.trim()
                                    .replaceAll("\"", "")
-                                   .split("\\s+");
+                                   .split("\\s+|-");
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < split.length; i++) {
             try {
+                final String word = split[i];
+                if (word.matches("\\d+")) {
+                    result.append(word);
 
-                final char charAt = split[i].toUpperCase()
+                } else {
+
+                    final char charAt = word.toUpperCase()
                                             .charAt(0);
-                result.append(charAt);
+                    result.append(charAt);
+                }
+
             } catch (StringIndexOutOfBoundsException e) {
                 System.out.println("name = " + name);
             }
