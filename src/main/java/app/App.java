@@ -59,11 +59,11 @@ public class App {
 
 
         System.out.println("========== check dup and Telex province ==========");
-        listCodeDuplicateAndVnTelex(provinceMap);
+        checkCodeDuplicateAndTelex(provinceMap);
         System.out.println("========== check dup and Telex district ==========");
-        listCodeDuplicateAndVnTelex(districtMap);
+        checkCodeDuplicateAndTelex(districtMap);
         System.out.println("========== check dup and Telex ward ==========");
-        listCodeDuplicateAndVnTelex(wardMap);
+        checkCodeDuplicateAndTelex(wardMap);
 
         Writer.write(newProvinceSql, NEW_FILE_PROVINCE_SQL);
         Writer.write(newDistrictSql, NEW_FILE_DISTRICT_SQL);
@@ -72,7 +72,7 @@ public class App {
 
     }
 
-    private static void listCodeDuplicateAndVnTelex(Map<Long, ? extends Model> map) {
+    private static void checkCodeDuplicateAndTelex(Map<Long, ? extends Model> map) {
         final long countDuplicate = map.values()
                                        .stream()
                                        .map(Model::getCode)
@@ -261,6 +261,7 @@ public class App {
 
     private static String getFirstUpWord(String name) {
         final String[] split = name.trim()
+                                   .replaceAll(" ","")
                                    .replaceAll("\"", "")
                                    .split("\\s+|-");
         StringBuilder result = new StringBuilder();
